@@ -1,36 +1,59 @@
-import MovieCard from "@/components/MovieCard";
+import { Suspense } from "react";
+import FeaturedMovies, {
+  FeaturedMoviesFallback,
+} from "@/components/FeaturedMovies";
 import SearchBar from "@/components/SearchBar";
-import { MOCK_MOVIES } from "@/lib/mock-movies";
+import SearchResults, {
+  SearchResultsFallback,
+} from "@/components/SearchResults";
 
-// Server Component by default — this route has no client-only state itself.
-export default function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+
   return (
     <div>
-      <section className="max-w-6xl mx-auto px-6 pt-14 pb-10 text-center">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-gold mb-3">
           Now Showing
         </p>
-        <h1 className="font-display text-6xl md:text-7xl tracking-wide mb-6">
+        <h1 className="font-display text-4xl sm:text-6xl md:text-7xl tracking-wide mb-6">
           Find your next watch
         </h1>
-        <SearchBar />
+        <Suspense fallback={<SearchBarFallback />}>
+          <SearchBar />
+        </Suspense>
       </section>
 
       <div className="filmstrip" />
 
-      <section className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex items-baseline justify-between mb-6">
-          <h2 className="font-display text-2xl tracking-wide">Featured</h2>
-          <p className="font-mono text-xs text-muted uppercase">
-            Placeholder data — live search lands in Phase 3
-          </p>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-          {MOCK_MOVIES.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))}
-        </div>
-      </section>
+      <Suspense fallback={<FeaturedMoviesFallback />}>
+        <FeaturedMovies />
+      </Suspense>
+
+      {q?.trim() && (
+        <>
+          <div className="filmstrip" />
+          <Suspense key={q} fallback={<SearchResultsFallback />}>
+            <SearchResults query={q} />
+          </Suspense>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SearchBarFallback() {
+  return (
+    <div
+      className="flex w-full max-w-xl mx-auto border-2 border-accent-gold rounded-sm overflow-hidden animate-pulse"
+      aria-hidden
+    >
+      <div className="flex-1 bg-surface px-4 py-3 h-12" />
+      <div className="w-20 sm:w-24 bg-accent-gold/50" />
     </div>
   );
 }
